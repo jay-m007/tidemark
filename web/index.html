@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; form-action 'none'; base-uri 'none'">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#17191c">
+<title>Tidemark</title>
+<meta name="description" content="Clean up your browser bookmarks: find duplicates, strip tracking junk, add tags, search and export a tidy file. Runs in your browser; nothing is uploaded.">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="wrap">
+<header class="top">
+  <div class="brand"><svg class="mark" viewBox="0 0 64 64" aria-hidden="true"><path d="M20 10h24v44l-12-9-12 9z" fill="currentColor"/><path d="M8 38c6-5 10-5 16 0s10 5 16 0 10-5 16 0" fill="none" stroke="var(--bg)" stroke-width="4" stroke-linecap="round"/></svg><span>Tidemark</span></div>
+  <p class="privacy">Everything happens in this tab. Your bookmarks are never uploaded.</p>
+</header>
+
+<main id="main">
+<section id="start">
+  <h1>Tidy up your bookmarks</h1>
+  <p class="lede">Drop in the file your browser exports. Tidemark finds the same page saved twice, strips tracking junk from links, suggests tags and gives you a clean file to import back.</p>
+
+  <div id="drop" class="drop" tabindex="-1">
+    <p class="drop-title">Choose your bookmarks file</p>
+    <p class="muted">or drop it here. It is an .html file.</p>
+    <div class="row center">
+      <label class="btn primary" for="file">Choose file</label>
+      <input id="file" class="sr" type="file" accept=".html,.htm,text/html">
+      <button id="sample" class="btn ghost" type="button">Try a sample</button>
+    </div>
+    <p id="err" class="err" role="alert"></p>
+  </div>
+
+  <details class="how">
+    <summary>How do I get the file?</summary>
+    <dl>
+      <dt>Chrome, Edge, Brave</dt><dd>Open the bookmark manager (Ctrl+Shift+O), click the three dots, choose <b>Export bookmarks</b>.</dd>
+      <dt>Firefox</dt><dd>Press Ctrl+Shift+O, then Import and Backup, then <b>Export Bookmarks to HTML</b>.</dd>
+      <dt>Safari</dt><dd>File menu, Export, then <b>Bookmarks</b>.</dd>
+    </dl>
+  </details>
+</section>
+
+<section id="work" hidden>
+  <div class="workbar"><h1 class="small-h">Your bookmarks</h1><button class="btn ghost" id="restart" type="button">Open another file</button></div>
+  <div class="summary" id="summary" aria-live="polite"></div>
+  <nav class="tabs" role="tablist" aria-label="Sections">
+    <button role="tab" id="tab-clean" aria-controls="panel-clean" aria-selected="true">Clean up</button>
+    <button role="tab" id="tab-library" aria-controls="panel-library" aria-selected="false" tabindex="-1">Library</button>
+    <button role="tab" id="tab-tags" aria-controls="panel-tags" aria-selected="false" tabindex="-1">Tags</button>
+    <button role="tab" id="tab-export" aria-controls="panel-export" aria-selected="false" tabindex="-1">Export</button>
+  </nav>
+
+  <div role="tabpanel" id="panel-clean" aria-labelledby="tab-clean">
+    <label class="check big"><input type="checkbox" id="strip" checked><span id="strip-label">Remove tracking from links</span></label>
+    <p class="muted small" id="strip-help">Takes out utm_ codes, fbclid, gclid and similar parts that only say where you clicked from. The page stays the same.</p>
+    <h2>Same page, saved more than once</h2>
+    <p class="muted small">The copy marked <b>keep</b> is the one with tags, a note or a folder, otherwise the oldest. Untick a copy to keep it.</p>
+    <div class="row"><button class="btn ghost" id="all-copies" type="button">Remove all extra copies</button><button class="btn ghost" id="no-copies" type="button">Keep everything</button></div>
+    <div id="dupes" class="groups"></div>
+    <h2>Possibly the same</h2>
+    <p class="muted small">Same site and same title, but different addresses. These are never removed unless you tick them.</p>
+    <div id="similar" class="groups"></div>
+  </div>
+
+  <div role="tabpanel" id="panel-library" aria-labelledby="tab-library" hidden>
+    <label class="sr" for="q">Search bookmarks</label>
+    <input id="q" type="search" placeholder="Search. Try tag:code, site:github.com, folder:work, -word" autocomplete="off">
+    <div id="tagbar" class="tagbar"></div>
+    <p id="count" class="muted small" aria-live="polite"></p>
+    <ul id="list" class="list"></ul>
+    <button id="more" class="btn ghost" type="button" hidden>Show more</button>
+  </div>
+
+  <div role="tabpanel" id="panel-tags" aria-labelledby="tab-tags" hidden>
+    <h2>Suggested tags</h2>
+    <p class="muted small">Based on the site, the folder and the title. Click a tag to turn it off. Nothing is applied until you export.</p>
+    <div class="row"><button class="btn primary" id="tags-all" type="button">Use all suggestions</button><button class="btn ghost" id="tags-none" type="button">Clear</button><span id="tags-count" class="muted small"></span></div>
+    <ul id="suggest" class="list"></ul>
+    <button id="suggest-more" class="btn ghost" type="button" hidden>Show more</button>
+  </div>
+
+  <div role="tabpanel" id="panel-export" aria-labelledby="tab-export" hidden>
+    <h2>Your tidy file</h2>
+    <ul id="plan" class="plan"></ul>
+    <div class="row">
+      <button class="btn primary" id="dl-html" type="button">Download bookmarks (.html)</button>
+      <button class="btn ghost" id="dl-csv" type="button">Spreadsheet (.csv)</button>
+      <button class="btn ghost" id="dl-json" type="button">Data (.json)</button>
+    </div>
+    <details class="how" open>
+      <summary>Putting it back in your browser</summary>
+      <p>Your browser merges an imported file with what it already has, so the old copies would stay. For a clean result, import into a fresh profile, or delete the old bookmarks first and then import this file.</p>
+    </details>
+  </div>
+</section>
+</main>
+<footer class="foot"><p class="muted small">A rebuild of the idea behind Delicious. Open source. No account, no server, no tracking.</p></footer>
+</div>
+<script type="module" src="app.js"></script>
+</body>
+</html>
